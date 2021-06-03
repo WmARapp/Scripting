@@ -1,0 +1,56 @@
+Public-Key Authentication between two IBMi lpars and a HMC
+
+Licensed Programs
+5733SC1 Option *BASE 	IBM Portable Utilities for i
+5733SC1 Option 1	OpenSSH, OpenSSL, zlib
+5770SS1	Option 30	Qshell
+5770SS1 Option 33	Portable App Solutions Environment
+
+Upcoming episodes
+5733OPS	*ALL
+
+CFGTCP
+Options 10 and 12 are setup correctly
+HMC must allow SSH connections
+
+SSH Server must be running on target system.
+NETSTAT *CNN should show ssh or port 22 in Listen status.
+If not running start it STRTCPSVR SERVER(*SSHD)
+
+
+CRTUSRPRF USRPRF(TEST) PASSWORD(password) HOMEDIR('/home/test')
+Log on as Test.
+mkdir '/home/test'
+CALL QP2TERM
+cd /home/test
+ssh-keygen -t ed25519
+F3 to exit PASE
+QSH
+cp /home/test/.ssh/id_ed25519.pub /home/test/.ssh/authorized_keys
+cd /home
+> ls -al                                                        
+  total: 260 kilobytes                                          
+  drwxrwsrwx   3 QSYS  0                  8192 Oct 14 15:50 .   
+  drwxrwsrwx  22 QSYS  0                249856 Oct 11 16:10 ..  
+  drwxrwsrwx   3 TEST  0                  8192 Oct 14 16:31 test
+  $                                                             
+> chmod 755 test                                                
+  $                                                             
+> ls -al                                                        
+  total: 260 kilobytes                                          
+  drwxrwsrwx   3 QSYS  0                  8192 Oct 14 15:50 .   
+  drwxrwsrwx  22 QSYS  0                249856 Oct 11 16:10 ..  
+  drwxr-sr-x   3 TEST  0                  8192 Oct 14 16:31 test
+
+
+HMC
+mkhmcusr -i "name=test,taskrole=hmcsuperadmin,passwd=password,description=Test Account,authentication_type=local,remote_webui_access=1"
+logon the hmc as test
+mkauthkeys --add 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAu5Quadn0xvkJAz4Je/1BDCdh9cQZqcEsfXPe+HSyXF test@POWERI.LOCAL'
+mkauthkeys --add 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH0krUCJ7FOo8eWKS4lkwLmhyDqFXN2H39VH8jfWWe3K test@POWERIB.LOCAL'
+
+
+References:
+http://www-01.ibm.com/support/docview.wss?uid=nas8N1012709
+https://www.ssh.com/ssh/keygen/
+https://nvlpubs.nist.gov/nistpubs/ir/2014/NIST.IR.7946.pdf
